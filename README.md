@@ -6,6 +6,11 @@ resume, GitHub profile, or job application without exposing account details.
 
 **Live page:** https://zhuhroscar-tech.github.io/portfolio-performance/
 
+## Demo
+
+Watch the [project demonstration](docs/demo.mp4) to see the percentage-only
+pipeline and public page workflow without exposing account or dollar data.
+
 ## What it shows
 
 - Total realized return (% of contributed capital)
