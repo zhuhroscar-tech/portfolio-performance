@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Portfolio Performance — Oscar Zhu</title>
+<meta name="description" content="Realized trading performance, updated automatically from brokerage transaction history. Percentages only — no dollar amounts, account numbers, or symbol-level detail.">
+<style>
+  :root{
+    --ink:#1d2327; --muted:#66707a; --border:#e3e7ea; --bg:#fafbfc; --card:#ffffff;
+    --accent:#0a7a5c; --accent-dim:#0a7a5c1a; --neg:#a13a2f;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --ink:#e9edf0; --muted:#9aa5ad; --border:#2a3136; --bg:#111417; --card:#171b1e; --accent:#37c496; --accent-dim:#37c49626; --neg:#e2837a; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Helvetica,Arial,sans-serif;line-height:1.5}
+  main{max-width:840px;margin:0 auto;padding:48px 20px 80px}
+  header{margin-bottom:36px}
+  h1{font-size:22px;font-weight:600;letter-spacing:-0.01em;margin:0 0 6px}
+  .sub{color:var(--muted);font-size:14px;margin:0}
+  .asof{font-size:12px;color:var(--muted);margin-top:4px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:28px 0 36px}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px}
+  .stat .label{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:6px}
+  .stat .value{font-size:26px;font-weight:600;letter-spacing:-0.01em;font-variant-numeric:tabular-nums}
+  .stat .value.pos{color:var(--accent)}
+  .stat .value.neg{color:var(--neg)}
+  .chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:28px}
+  .chart-card h2{font-size:13px;font-weight:600;margin:0 0 14px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  #chart{width:100%;height:280px}
+  .note{font-size:12.5px;color:var(--muted);line-height:1.6}
+  .note + .note{margin-top:8px}
+  footer{border-top:1px solid var(--border);margin-top:36px;padding-top:18px;font-size:11.5px;color:var(--muted)}
+  a{color:inherit}
+  .empty{padding:40px 0;text-align:center;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Portfolio Performance</h1>
+    <p class="sub">Realized trading performance, computed from brokerage transaction history.</p>
+    <p class="asof" id="asof">Loading…</p>
+  </header>
+
+  <div class="grid" id="stats"></div>
+
+  <div class="chart-card">
+    <h2>Cumulative realized return (% of contributed capital)</h2>
+    <svg id="chart" role="img" aria-label="Cumulative realized return over time"></svg>
+  </div>
+
+  <p class="note">
+    <strong>Methodology:</strong> a "closed trade" is one symbol's full round trip from zero shares back to zero shares, matched
+    first-in-first-out. Total return is realized profit from all closed trades divided by total capital contributed to the
+    account. Win rate is the share of closed trades with a positive result. Only percentages are published — no dollar
+    amounts, account numbers, or symbol-level detail.
+  </p>
+  <p class="note">
+    <strong>Scope:</strong> figures reflect only <em>closed</em> positions as of the date shown; currently open positions are
+    excluded until they close. This is a personal record of realized performance, not an audited return series, and not a
+    time-weighted or annualized return.
+  </p>
+
+  <footer>
+    Data updates automatically when a new brokerage export is processed. Source and methodology:
+    <a href="https://github.com/zhuhroscar-tech/portfolio-performance">github.com/zhuhroscar-tech/portfolio-performance</a>.
+  </footer>
+</main>
+
+<script>
+async function main(){
+  const res = await fetch('data/performance.json', {cache: 'no-store'});
+  if(!res.ok){ document.getElementById('stats').innerHTML = '<div class="empty">No data published yet.</div>'; return; }
+  const d = await res.json();
+  const m = d.metrics;
+
+  document.getElementById('asof').textContent = d.as_of
+    ? `As of ${d.as_of} · updated ${new Date(d.generated_at_utc).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'})}`
+    : 'No closed trades yet.';
+
+  const pct = (x, digits=2) => (x === null || x === undefined) ? '—' : `${x >= 0 ? '+' : ''}${x.toFixed(digits)}%`;
+  const cards = [
+    ['Total realized return', pct(m.total_return_pct), m.total_return_pct >= 0 ? 'pos' : 'neg'],
+    ['Win rate', `${m.win_rate_pct.toFixed(1)}%`, ''],
+    ['Closed trades', `${m.closed_trades}`, ''],
+    ['Avg. holding time', `${m.avg_holding_days.toFixed(1)}d`, ''],
+    ['Avg. gain / trade', pct(m.avg_gain_pct_per_trade), (m.avg_gain_pct_per_trade ?? 0) >= 0 ? 'pos' : 'neg'],
+    ['Symbols traded', `${m.distinct_symbols_traded}`, ''],
+  ];
+  document.getElementById('stats').innerHTML = cards.map(([label,value,cls]) =>
+    `<div class="stat"><div class="label">${label}</div><div class="value ${cls}">${value}</div></div>`
+  ).join('');
+
+  drawChart(d.daily_cumulative_return_pct || []);
+}
+
+function drawChart(series){
+  const svg = document.getElementById('chart');
+  const w = svg.clientWidth || 800, h = 280;
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  if(series.length < 2){
+    svg.innerHTML = `<text x="${w/2}" y="${h/2}" text-anchor="middle" fill="var(--muted)" font-size="13">Not enough closed trades yet to chart.</text>`;
+    return;
+  }
+  const pad = {l:44, r:16, t:16, b:28};
+  const xs = series.map(p => new Date(p.date).getTime());
+  const ys = series.map(p => p.cumulative_return_pct);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const yMin = Math.min(0, ...ys), yMax = Math.max(0, ...ys);
+  const yPad = (yMax - yMin) * 0.1 || 1;
+  const y0 = yMin - yPad, y1 = yMax + yPad;
+  const X = t => pad.l + (t - x0) / (x1 - x0 || 1) * (w - pad.l - pad.r);
+  const Y = v => (h - pad.b) - (v - y0) / (y1 - y0 || 1) * (h - pad.t - pad.b);
+
+  const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+  const accent = dark ? '#37c496' : '#0a7a5c';
+  const grid = dark ? '#2a3136' : '#e3e7ea';
+  const muted = dark ? '#9aa5ad' : '#66707a';
+
+  let s = '';
+  // gridlines
+  const ticks = 4;
+  for(let i=0;i<=ticks;i++){
+    const v = y0 + (y1-y0)*i/ticks;
+    const yy = Y(v);
+    s += `<line x1="${pad.l}" x2="${w-pad.r}" y1="${yy}" y2="${yy}" stroke="${grid}" stroke-width="1"/>`;
+    s += `<text x="${pad.l-8}" y="${yy+4}" text-anchor="end" font-size="10" fill="${muted}">${v.toFixed(1)}%</text>`;
+  }
+  // zero line emphasis
+  if(y0 < 0 && y1 > 0){
+    s += `<line x1="${pad.l}" x2="${w-pad.r}" y1="${Y(0)}" y2="${Y(0)}" stroke="${muted}" stroke-width="1" stroke-dasharray="2 3"/>`;
+  }
+  // path
+  const d = series.map((p,i) => `${i===0?'M':'L'}${X(new Date(p.date).getTime()).toFixed(1)},${Y(p.cumulative_return_pct).toFixed(1)}`).join(' ');
+  s += `<path d="${d}" fill="none" stroke="${accent}" stroke-width="2"/>`;
+  // last point marker
+  const last = series[series.length-1];
+  s += `<circle cx="${X(new Date(last.date).getTime()).toFixed(1)}" cy="${Y(last.cumulative_return_pct).toFixed(1)}" r="3.5" fill="${accent}"/>`;
+  // x labels (first / last)
+  s += `<text x="${X(x0)}" y="${h-8}" font-size="10" fill="${muted}">${series[0].date}</text>`;
+  s += `<text x="${X(x1)}" y="${h-8}" text-anchor="end" font-size="10" fill="${muted}">${last.date}</text>`;
+
+  svg.innerHTML = s;
+}
+
+main().catch(err => {
+  document.getElementById('stats').innerHTML = `<div class="empty">Failed to load data: ${err.message}</div>`;
+});
+</script>
+</body>
+</html>

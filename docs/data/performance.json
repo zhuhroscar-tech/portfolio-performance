@@ -1,0 +1,235 @@
+{
+  "as_of": "2026-09-08",
+  "generated_at_utc": "2026-09-11T17:23:25+00:00",
+  "metrics": {
+    "total_return_pct": 13.433,
+    "closed_trades": 85,
+    "win_rate_pct": 95.29,
+    "avg_holding_days": 30.33,
+    "avg_gain_pct_per_trade": 6.7779,
+    "distinct_symbols_traded": 92
+  },
+  "daily_cumulative_return_pct": [
+    {
+      "date": "2025-10-24",
+      "cumulative_return_pct": 0.0032
+    },
+    {
+      "date": "2025-10-28",
+      "cumulative_return_pct": 0.0038
+    },
+    {
+      "date": "2025-11-10",
+      "cumulative_return_pct": 0.0583
+    },
+    {
+      "date": "2026-01-05",
+      "cumulative_return_pct": 0.1815
+    },
+    {
+      "date": "2026-01-13",
+      "cumulative_return_pct": 0.1816
+    },
+    {
+      "date": "2026-01-15",
+      "cumulative_return_pct": 0.4004
+    },
+    {
+      "date": "2026-01-27",
+      "cumulative_return_pct": 0.8682
+    },
+    {
+      "date": "2026-02-03",
+      "cumulative_return_pct": 0.9463
+    },
+    {
+      "date": "2026-02-09",
+      "cumulative_return_pct": 0.9715
+    },
+    {
+      "date": "2026-02-20",
+      "cumulative_return_pct": 1.0586
+    },
+    {
+      "date": "2026-03-16",
+      "cumulative_return_pct": 1.0641
+    },
+    {
+      "date": "2026-03-19",
+      "cumulative_return_pct": 1.1109
+    },
+    {
+      "date": "2026-03-23",
+      "cumulative_return_pct": 1.1584
+    },
+    {
+      "date": "2026-03-31",
+      "cumulative_return_pct": 1.0577
+    },
+    {
+      "date": "2026-04-01",
+      "cumulative_return_pct": 1.0601
+    },
+    {
+      "date": "2026-04-08",
+      "cumulative_return_pct": 1.1378
+    },
+    {
+      "date": "2026-04-14",
+      "cumulative_return_pct": 1.1427
+    },
+    {
+      "date": "2026-04-17",
+      "cumulative_return_pct": 1.1485
+    },
+    {
+      "date": "2026-04-22",
+      "cumulative_return_pct": 1.1877
+    },
+    {
+      "date": "2026-05-12",
+      "cumulative_return_pct": 1.2242
+    },
+    {
+      "date": "2026-05-22",
+      "cumulative_return_pct": 1.2707
+    },
+    {
+      "date": "2026-05-26",
+      "cumulative_return_pct": 1.3058
+    },
+    {
+      "date": "2026-05-27",
+      "cumulative_return_pct": 1.3588
+    },
+    {
+      "date": "2026-06-01",
+      "cumulative_return_pct": 1.3622
+    },
+    {
+      "date": "2026-06-02",
+      "cumulative_return_pct": 1.5447
+    },
+    {
+      "date": "2026-06-04",
+      "cumulative_return_pct": 1.5689
+    },
+    {
+      "date": "2026-06-09",
+      "cumulative_return_pct": 1.6505
+    },
+    {
+      "date": "2026-06-11",
+      "cumulative_return_pct": 1.7117
+    },
+    {
+      "date": "2026-06-12",
+      "cumulative_return_pct": 2.2908
+    },
+    {
+      "date": "2026-06-16",
+      "cumulative_return_pct": 2.4672
+    },
+    {
+      "date": "2026-06-18",
+      "cumulative_return_pct": 2.4943
+    },
+    {
+      "date": "2026-06-22",
+      "cumulative_return_pct": 2.8169
+    },
+    {
+      "date": "2026-06-26",
+      "cumulative_return_pct": 2.8207
+    },
+    {
+      "date": "2026-07-02",
+      "cumulative_return_pct": 2.8159
+    },
+    {
+      "date": "2026-07-07",
+      "cumulative_return_pct": 2.8253
+    },
+    {
+      "date": "2026-07-08",
+      "cumulative_return_pct": 3.4001
+    },
+    {
+      "date": "2026-07-09",
+      "cumulative_return_pct": 3.4937
+    },
+    {
+      "date": "2026-07-10",
+      "cumulative_return_pct": 3.5999
+    },
+    {
+      "date": "2026-07-14",
+      "cumulative_return_pct": 3.6856
+    },
+    {
+      "date": "2026-07-15",
+      "cumulative_return_pct": 5.3814
+    },
+    {
+      "date": "2026-07-21",
+      "cumulative_return_pct": 6.5924
+    },
+    {
+      "date": "2026-07-22",
+      "cumulative_return_pct": 6.7031
+    },
+    {
+      "date": "2026-07-29",
+      "cumulative_return_pct": 6.7957
+    },
+    {
+      "date": "2026-08-03",
+      "cumulative_return_pct": 6.8769
+    },
+    {
+      "date": "2026-08-04",
+      "cumulative_return_pct": 6.9583
+    },
+    {
+      "date": "2026-08-05",
+      "cumulative_return_pct": 7.004
+    },
+    {
+      "date": "2026-08-07",
+      "cumulative_return_pct": 7.0097
+    },
+    {
+      "date": "2026-08-10",
+      "cumulative_return_pct": 7.1299
+    },
+    {
+      "date": "2026-08-13",
+      "cumulative_return_pct": 8.3985
+    },
+    {
+      "date": "2026-08-26",
+      "cumulative_return_pct": 8.4475
+    },
+    {
+      "date": "2026-09-01",
+      "cumulative_return_pct": 8.4789
+    },
+    {
+      "date": "2026-09-02",
+      "cumulative_return_pct": 8.5749
+    },
+    {
+      "date": "2026-09-03",
+      "cumulative_return_pct": 8.5985
+    },
+    {
+      "date": "2026-09-04",
+      "cumulative_return_pct": 8.8857
+    },
+    {
+      "date": "2026-09-08",
+      "cumulative_return_pct": 13.433
+    }
+  ],
+  "methodology_note": "Realized-only performance from closed (flat-to-flat) positions, FIFO-matched. Total return % is realized profit from closed trades divided by total capital contributed to the account. Excludes open positions (until they close), dividends/interest, taxes, and account-level financing costs. Percentages only -- no dollar amounts, account numbers, or symbol-level detail are published."
+}

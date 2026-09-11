@@ -1,0 +1,28 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies
+        run: pip install pytest
+      - name: Run tests
+        run: python -m pytest tests/ -v
+      - name: Verify no secrets or dollar amounts in published data
+        run: |
+          if [ -f docs/data/performance.json ]; then
+            if grep -q '\$' docs/data/performance.json; then
+              echo "ERROR: dollar sign found in published performance.json"
+              exit 1
+            fi
+          fi
