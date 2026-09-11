@@ -1,6 +1,7 @@
 # Never commit the source brokerage export or any personal financial data.
 # Scoped to data/ so synthetic test fixtures under tests/fixtures/ are unaffected.
 data/*.csv
+data/*.json
 Transactions*.csv
 *_Transactions_*.csv
 .env

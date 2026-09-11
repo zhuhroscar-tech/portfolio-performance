@@ -1,0 +1,58 @@
+name: Daily performance update
+
+on:
+  schedule:
+    # 13:30 UTC ≈ 9:30am ET (US market open) daily. Adjust if desired.
+    - cron: "30 13 * * *"
+  workflow_dispatch: {}  # allows manual trigger from the Actions tab
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Schwab credentials are configured
+        id: check_secrets
+        run: |
+          if [ -z "${{ secrets.SCHWAB_APP_KEY }}" ] || [ -z "${{ secrets.SCHWAB_APP_SECRET }}" ] || [ -z "${{ secrets.SCHWAB_REFRESH_TOKEN }}" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip (Schwab credentials not yet configured)
+        if: steps.check_secrets.outputs.configured == 'false'
+        run: |
+          echo "SCHWAB_APP_KEY / SCHWAB_APP_SECRET / SCHWAB_REFRESH_TOKEN are not"
+          echo "yet set as repository secrets. See README.md 'Why it isn't fully"
+          echo "automated yet' and scripts/schwab_login.py for setup steps."
+          echo "This workflow will no-op (not fail) until those secrets exist."
+
+      - uses: actions/setup-python@v5
+        if: steps.check_secrets.outputs.configured == 'true'
+        with:
+          python-version: "3.12"
+
+      - name: Fetch today's snapshot and update performance.json
+        if: steps.check_secrets.outputs.configured == 'true'
+        env:
+          SCHWAB_APP_KEY: ${{ secrets.SCHWAB_APP_KEY }}
+          SCHWAB_APP_SECRET: ${{ secrets.SCHWAB_APP_SECRET }}
+          SCHWAB_REFRESH_TOKEN: ${{ secrets.SCHWAB_REFRESH_TOKEN }}
+        run: python3 scripts/daily_schwab_update.py
+
+      - name: Commit updated performance.json
+        if: steps.check_secrets.outputs.configured == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/data/performance.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: automated daily performance update"
+            git push
+          fi
