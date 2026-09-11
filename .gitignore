@@ -1,0 +1,10 @@
+# Never commit the source brokerage export or any personal financial data.
+*.csv
+Transactions*.csv
+*_Transactions_*.csv
+.env
+.DS_Store
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
