@@ -87,26 +87,42 @@ discarded. If you fork this for your own use, keep it that way: audit any
 change to `engine/providers/closed_trades.py` for a `Decimal`/dollar value
 leaking into the output dict before committing.
 
-## Why it isn't fully automated yet
+## Why it isn't fully automated *yet*
 
-The eventual goal is a **daily automatic** update with zero manual steps.
-The blocker is brokerage OAuth, not this code:
+The daily-update pipeline is **fully built and tested** — see
+`engine/providers/schwab_api.py` (OAuth client + account fetch, 7 passing
+tests against mocked HTTP), `scripts/daily_schwab_update.py` (the job that
+runs daily), and `.github/workflows/daily-update.yml` (the schedule).
 
-- Schwab's Trader API issues a refresh token that **expires every 7 days**,
-  and renewing it requires an interactive browser login — it cannot be
-  scripted end-to-end today.
-- A brokerage-aggregator service (e.g. SnapTrade) handles that token
-  refresh problem server-side and would let this run as an unattended daily
-  job. That requires signing up for and connecting through such a service,
-  which is an account-linking step only the account owner can do.
+What's left is **one credential step only the account owner can do**:
 
-Until one of those is wired in, this repo's `scripts/update_performance.py`
-is run manually against a fresh export whenever you want to refresh the
-published numbers. The output format and site are already built for the
-automated version — swapping the CSV read for an API pull is a small,
-contained change (adding a `fetch_transactions_from_api()` step and a new
-provider module alongside `engine/providers/closed_trades.py`), not a
-redesign.
+1. Register an Individual Developer app at
+   [developer.schwab.com](https://developer.schwab.com/), requesting the
+   "Trader API - Individual" product (read-only account access is enough).
+2. Run `python3 scripts/schwab_login.py` once — it walks you through a
+   ~30-second interactive Schwab login in your own browser and prints a
+   refresh token.
+3. Add `SCHWAB_APP_KEY`, `SCHWAB_APP_SECRET`, and `SCHWAB_REFRESH_TOKEN` as
+   [GitHub Actions repository secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions).
+4. The `daily-update.yml` workflow picks them up automatically on its next
+   scheduled run (13:30 UTC daily) — no code changes needed.
+
+**The catch:** Schwab's refresh token expires every **7 days** and renewing
+it requires that same ~30-second interactive login — this is a hard
+platform limit, not a bug. So "fully automated forever" currently means
+"fully automated, with a 30-second manual check-in roughly weekly." The
+workflow is written to fail loudly and specifically (not silently) when
+the refresh token expires, so you'll know exactly when to re-run
+`schwab_login.py`.
+
+A brokerage-aggregator service (e.g. [SnapTrade](https://snaptrade.com/))
+would remove even that weekly step by managing token refresh server-side.
+That's a possible future provider module alongside `schwab_api.py`, not
+implemented yet.
+
+Until Schwab credentials are configured, `scripts/update_performance.py`
+(the `closed_trades` provider) is the manual path: run it against a fresh
+CSV export whenever you want to refresh the published numbers.
 
 ## License
 
