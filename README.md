@@ -4,7 +4,11 @@
 
 A static performance page backed by a Python pipeline that converts private brokerage exports into percentage-based summaries. The default path reports realized results from closed positions without publishing account balances, account identifiers, or symbol-level profit/loss.
 
+## Demo
+
 **Visitors:** [open the public dashboard](https://zhuhroscar-tech.github.io/portfolio-performance/). No installation, brokerage login, or API key is needed. Read the methodology alongside the figures; this is not investment advice or an audited account statement.
+
+Watch the [project demonstration](docs/demo.mp4) to see the percentage-only pipeline and public page workflow without exposing account or dollar data.
 
 ## What the default page shows
 
