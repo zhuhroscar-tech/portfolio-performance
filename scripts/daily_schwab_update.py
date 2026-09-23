@@ -59,6 +59,22 @@ def _save_history(snapshots: list[EquitySnapshot]) -> None:
     HISTORY_PATH.write_text(json.dumps(payload, indent=2) + "\n")
 
 
+def _redact_token_payload(payload: dict) -> dict:
+    """Return a log-safe copy of a token response.
+
+    GitHub masks configured secrets, but it cannot know newly rotated
+    tokens or arbitrary token-response fields. Keep CI logs structural:
+    useful enough to debug the response shape, never useful as credentials.
+    """
+    redacted = {}
+    for key, value in payload.items():
+        if "token" in key.lower():
+            redacted[key] = "[redacted]"
+        else:
+            redacted[key] = value
+    return redacted
+
+
 def main() -> int:
     import os
 
@@ -98,17 +114,19 @@ def main() -> int:
 
     access_token = tokens.get("access_token")
     if not access_token:
-        print(f"error: no access_token in refresh response: {tokens}", file=sys.stderr)
+        safe_tokens = _redact_token_payload(tokens)
+        print(f"error: no access_token in refresh response: {safe_tokens}", file=sys.stderr)
         return 1
 
     new_refresh_token = tokens.get("refresh_token", refresh_token)
     if new_refresh_token != refresh_token:
-        # GitHub Actions can't update its own secrets mid-run; surface this
-        # clearly so the workflow (or the user) knows to rotate it.
+        # GitHub Actions can't update its own secrets mid-run. Do not print
+        # the rotated credential: public logs may outlive secret masking.
         print(
-            "NOTICE: Schwab issued a new refresh_token. Update the "
-            "SCHWAB_REFRESH_TOKEN repository secret to:\n"
-            f"  {new_refresh_token}",
+            "NOTICE: Schwab issued a rotated refresh token. Re-run "
+            "scripts/schwab_login.py locally and update the "
+            "SCHWAB_REFRESH_TOKEN repository secret; the token value is "
+            "intentionally not printed in CI logs.",
             file=sys.stderr,
         )
 

@@ -86,3 +86,57 @@ def test_main_output_never_contains_dollar_equity_values(tmp_path, monkeypatch):
     # that file is git-ignored and never committed.
     private_raw = history_path.read_text()
     assert "123456.78" in private_raw
+
+
+def test_main_never_prints_rotated_refresh_token(tmp_path, monkeypatch, capsys):
+    """A rotated Schwab refresh token is a brand-new secret.
+
+    GitHub can only mask values already configured as secrets, so the
+    daily workflow must not echo a replacement token into public logs.
+    """
+    monkeypatch.setattr(daily_schwab_update, "HISTORY_PATH", tmp_path / "equity_history.json")
+    monkeypatch.setattr(daily_schwab_update, "OUTPUT_PATH", tmp_path / "performance.json")
+    monkeypatch.setenv("SCHWAB_APP_KEY", "KEY")
+    monkeypatch.setenv("SCHWAB_APP_SECRET", "SECRET")
+    monkeypatch.setenv("SCHWAB_REFRESH_TOKEN", "OLD_REFRESH")
+
+    def fake_refresh_access_token(app_key, app_secret, refresh_token):
+        return {"access_token": "ACCESS", "refresh_token": "NEW_ROTATED_REFRESH_SECRET"}
+
+    def fake_fetch_snapshot(access_token):
+        return EquitySnapshot(as_of=date(2026, 9, 12), total_equity=100000.0, cash=5000.0, source="schwab")
+
+    monkeypatch.setattr(daily_schwab_update.schwab_api, "refresh_access_token", fake_refresh_access_token)
+    monkeypatch.setattr(daily_schwab_update.schwab_api, "fetch_snapshot", fake_fetch_snapshot)
+
+    rc = daily_schwab_update.main()
+    captured = capsys.readouterr()
+
+    assert rc == 0
+    assert "NEW_ROTATED_REFRESH_SECRET" not in captured.out
+    assert "NEW_ROTATED_REFRESH_SECRET" not in captured.err
+    assert "intentionally not printed" in captured.err
+
+
+def test_missing_access_token_error_redacts_token_payload(monkeypatch, capsys):
+    monkeypatch.setenv("SCHWAB_APP_KEY", "KEY")
+    monkeypatch.setenv("SCHWAB_APP_SECRET", "SECRET")
+    monkeypatch.setenv("SCHWAB_REFRESH_TOKEN", "OLD_REFRESH")
+
+    def fake_refresh_access_token(app_key, app_secret, refresh_token):
+        return {
+            "refresh_token": "NEW_ROTATED_REFRESH_SECRET",
+            "id_token": "ID_TOKEN_SECRET",
+            "token_type": "Bearer",
+        }
+
+    monkeypatch.setattr(daily_schwab_update.schwab_api, "refresh_access_token", fake_refresh_access_token)
+
+    rc = daily_schwab_update.main()
+    captured = capsys.readouterr()
+
+    assert rc == 1
+    assert "NEW_ROTATED_REFRESH_SECRET" not in captured.err
+    assert "ID_TOKEN_SECRET" not in captured.err
+    assert "'refresh_token': '[redacted]'" in captured.err
+    assert "'id_token': '[redacted]'" in captured.err
