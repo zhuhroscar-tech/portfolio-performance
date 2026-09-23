@@ -27,8 +27,8 @@ jobs:
         if: steps.check_secrets.outputs.configured == 'false'
         run: |
           echo "SCHWAB_APP_KEY / SCHWAB_APP_SECRET / SCHWAB_REFRESH_TOKEN are not"
-          echo "yet set as repository secrets. See README.md 'Why it isn't fully"
-          echo "automated yet' and scripts/schwab_login.py for setup steps."
+          echo "yet set as repository secrets. See docs/REFERENCE.md and"
+          echo "scripts/schwab_login.py for setup steps."
           echo "This workflow will no-op (not fail) until those secrets exist."
 
       - uses: actions/setup-python@v5
