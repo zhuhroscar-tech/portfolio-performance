@@ -15,7 +15,7 @@ The existing [workflow](../.github/workflows/daily-update.yml) references `SCHWA
 
 The account owner must obtain authorized Schwab developer access and complete OAuth themselves; [the login helper](../scripts/schwab_login.py) is developer tooling, not a visitor login. Never publish credentials, authorization responses, account identifiers, CSV exports, or raw equity history.
 
-**Review logging before enabling this automation:** the current daily script can print a newly rotated refresh token and can include an unexpected token response in error output. Do not assume CI logs are safe just because configured secrets are masked. The code also expects periodic reauthorization when a refresh token expires. Keep credential setup and sensitive logs out of public issues and screenshots.
+**Review logging before enabling this automation:** the daily update script now avoids printing rotated token values, but credential handling still deserves careful review before any public CI run. Schwab refresh tokens expire periodically and require reauthorization; keep credential setup and any diagnostic logs out of public issues and screenshots.
 
 None of these optional paths are needed to view the public dashboard. This README refresh does not enable or change any scheduled workflow.
 
@@ -32,6 +32,6 @@ None of these optional paths are needed to view the public dashboard. This READM
 
 账户所有者需自行取得合法的 Schwab 开发者访问权限并完成 OAuth。[登录辅助脚本](../scripts/schwab_login.py)是开发工具，不是访客登录入口。不得公开凭据、授权响应、账户标识、CSV 导出或原始净值历史。
 
-**启用自动化前请先检查日志：**当前每日更新脚本可能打印轮换后的 refresh token，也可能在异常输出中包含非预期的 token 响应。不能因为 CI 会遮蔽已配置 secrets，就认定所有日志都安全。refresh token 过期时还需重新授权。不要把凭据配置或敏感日志放进公开 issue、截图。
+**启用自动化前请先检查日志：**每日更新脚本现在会避免打印轮换后的 token 值，但在公开 CI 中运行前仍需谨慎审查凭据处理。Schwab refresh token 会定期过期并需要重新授权；不要把凭据配置或诊断日志放进公开 issue、截图。
 
 普通访客无需使用这些可选路径。本次 README 更新不会启用或修改任何定时 workflow。
