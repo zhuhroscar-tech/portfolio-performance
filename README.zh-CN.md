@@ -53,4 +53,4 @@ pip install pytest
 python -m pytest tests/ -v
 ```
 
-[MIT 许可证](LICENSE)。
+[发布历史](CHANGELOG.md) · [MIT 许可证](LICENSE)。
