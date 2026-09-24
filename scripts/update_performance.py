@@ -30,6 +30,11 @@ def _build_closed_trades_output(csv_path: Path) -> dict:
     return closed_trades.compute_closed_trades_performance(csv_path)
 
 
+def _public_indexed_points(points: list[dict]) -> list[dict]:
+    """Drop private raw balances from indexed-equity chart points."""
+    return [{"date": point["date"], "index": point["index"]} for point in points]
+
+
 def _build_total_equity_output(csv_path: Path) -> dict:
     snapshots = manual_entry.fetch_snapshot_series(csv_path)
     summary = compute_performance(snapshots)
@@ -40,9 +45,9 @@ def _build_total_equity_output(csv_path: Path) -> dict:
             "indexed to 100 at inception. This IS mark-to-market portfolio "
             "performance. total_return_pct is the full-period return; "
             "max_drawdown_pct is the largest peak-to-trough decline in the "
-            "indexed series."
+            "indexed series. Only the index and percentage figures are "
+            "published -- raw dollar equity values are never committed."
         ),
-        "currency": "USD",
         "inception_date": summary.inception_date,
         "as_of_date": summary.as_of_date,
         "days_tracked": summary.days_tracked,
@@ -51,7 +56,7 @@ def _build_total_equity_output(csv_path: Path) -> dict:
         "max_drawdown_date": summary.max_drawdown_date,
         "best_day_pct": summary.best_day_pct,
         "worst_day_pct": summary.worst_day_pct,
-        "points": summary.indexed_series,
+        "points": _public_indexed_points(summary.indexed_series),
     }
 
 
