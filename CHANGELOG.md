@@ -2,6 +2,11 @@
 
 All notable source-quality changes to this repository are documented here.
 
+## v0.1.4 - 2026-09-26
+
+- Make the privacy/test workflow run explicitly for `v*` release tags so source releases validate the same percentage-only data contract as `main` pushes.
+- Add repository-contract coverage for release-tag CI wiring.
+
 ## v0.1.3 - 2026-09-24
 
 - Add release-history documentation and repository contract checks for required project files, local README links, GitHub Actions coverage, public-data privacy shape, and release-history links.
