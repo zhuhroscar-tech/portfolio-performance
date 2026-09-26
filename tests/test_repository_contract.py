@@ -50,7 +50,8 @@ def test_readmes_link_release_history_and_license() -> None:
 
 def test_changelog_documents_current_release() -> None:
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-    assert "## v0.1.3 - 2026-09-24" in changelog
+    assert "## v0.1.4 - 2026-09-26" in changelog
+    assert "v0.1.3" in changelog
     assert "v0.1.2" in changelog
     assert "manual-entry" in changelog
 
@@ -75,5 +76,6 @@ def test_github_actions_cover_tests_and_privacy_guard() -> None:
 
     assert "python -m pytest tests/ -v" in workflow
     assert "dollar sign found in published performance.json" in workflow
+    assert 'tags: ["v*"]' in workflow
     assert "schedule:" in daily
     assert "SCHWAB_APP_KEY" in daily
