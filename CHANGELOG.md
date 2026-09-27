@@ -2,6 +2,11 @@
 
 All notable source-quality changes to this repository are documented here.
 
+## v0.1.5 - 2026-09-27
+
+- Reject non-finite equity snapshots before performance computation so `NaN`/`Infinity` provider values cannot leak into public JSON or produce meaningless return and drawdown metrics.
+- Add regression coverage for finite snapshot validation.
+
 ## v0.1.4 - 2026-09-26
 
 - Make the privacy/test workflow run explicitly for `v*` release tags so source releases validate the same percentage-only data contract as `main` pushes.

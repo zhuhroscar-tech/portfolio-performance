@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from math import isfinite
 
 
 @dataclass(frozen=True)
@@ -22,6 +23,10 @@ class EquitySnapshot:
     source: str  # "schwab" | "snaptrade" | "manual"
 
     def __post_init__(self) -> None:
+        if not isfinite(self.total_equity):
+            raise ValueError(f"total_equity must be finite, got {self.total_equity}")
+        if not isfinite(self.cash):
+            raise ValueError(f"cash must be finite, got {self.cash}")
         if self.total_equity < 0:
             raise ValueError(f"total_equity must be >= 0, got {self.total_equity}")
         if self.cash < 0:

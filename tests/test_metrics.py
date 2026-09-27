@@ -68,3 +68,12 @@ def test_equity_snapshot_rejects_negative_values():
         EquitySnapshot(date(2026, 1, 1), -1.0, 0.0, "manual_entry")
     with pytest.raises(ValueError):
         EquitySnapshot(date(2026, 1, 1), 100.0, -1.0, "manual_entry")
+
+
+def test_equity_snapshot_rejects_non_finite_values():
+    with pytest.raises(ValueError, match="total_equity must be finite"):
+        EquitySnapshot(date(2026, 1, 1), float("nan"), 0.0, "manual_entry")
+    with pytest.raises(ValueError, match="total_equity must be finite"):
+        EquitySnapshot(date(2026, 1, 1), float("inf"), 0.0, "manual_entry")
+    with pytest.raises(ValueError, match="cash must be finite"):
+        EquitySnapshot(date(2026, 1, 1), 100.0, float("nan"), "manual_entry")
