@@ -88,12 +88,14 @@ def compute_closed_trades_performance(csv_path: str | Path) -> dict:
         txs.reverse()
 
     closed_positions = []  # {open_date, close_date, days, pnl_pct}
+    excluded_unmatched_sells = 0  # data-quality counter, not published
     for txs in by_symbol.values():
         lots: deque[list] = deque()  # [qty_remaining, unit_cost]
         pos_qty = Decimal(0)
         open_date: date | None = None
         cost_open = Decimal(0)
         proceeds_open = Decimal(0)
+        unmatched_in_position = False
 
         for tx in txs:
             qty = _parse_qty(tx.get("Quantity", ""))
@@ -106,6 +108,7 @@ def compute_closed_trades_performance(csv_path: str | Path) -> dict:
                 open_date = tx_date
                 cost_open = Decimal(0)
                 proceeds_open = Decimal(0)
+                unmatched_in_position = False
 
             if tx["Action"] == "Buy":
                 unit_cost = (-amount) / qty
@@ -121,26 +124,41 @@ def compute_closed_trades_performance(csv_path: str | Path) -> dict:
                     remaining -= take
                     if lots[0][0] <= 0:
                         lots.popleft()
+                if remaining > 0:
+                    # Sold more shares than this CSV's Buy rows ever
+                    # established a cost basis for (e.g. DRIP reinvestment
+                    # shares, stock splits, shares transferred/journaled in,
+                    # or option assignment/exercise -- none of which show up
+                    # as a tracked "Buy" row here). Treating those shares as
+                    # zero-cost would fabricate a phantom 100%-profit "win"
+                    # out of data this provider never actually saw the cost
+                    # for, so this whole position's realized economics are
+                    # unreliable and must not be published as a real trade.
+                    unmatched_in_position = True
                 proceeds_open += amount
                 pos_qty -= qty
 
                 if pos_qty <= Decimal("1e-6") and open_date is not None and cost_open > 0:
-                    pnl_pct = float((proceeds_open / cost_open - 1) * 100)
-                    closed_positions.append(
-                        {
-                            "open_date": open_date,
-                            "close_date": tx_date,
-                            "days": (tx_date - open_date).days,
-                            "pnl_pct": pnl_pct,
-                            "cost": cost_open,
-                            "proceeds": proceeds_open,
-                        }
-                    )
+                    if unmatched_in_position:
+                        excluded_unmatched_sells += 1
+                    else:
+                        pnl_pct = float((proceeds_open / cost_open - 1) * 100)
+                        closed_positions.append(
+                            {
+                                "open_date": open_date,
+                                "close_date": tx_date,
+                                "days": (tx_date - open_date).days,
+                                "pnl_pct": pnl_pct,
+                                "cost": cost_open,
+                                "proceeds": proceeds_open,
+                            }
+                        )
                     pos_qty = Decimal(0)
                     lots.clear()
                     open_date = None
                     cost_open = Decimal(0)
                     proceeds_open = Decimal(0)
+                    unmatched_in_position = False
 
     closed_positions.sort(key=lambda p: p["close_date"])
     n = len(closed_positions)
@@ -180,6 +198,7 @@ def compute_closed_trades_performance(csv_path: str | Path) -> dict:
                 round(avg_gain_pct_per_trade, 4) if avg_gain_pct_per_trade is not None else None
             ),
             "distinct_symbols_traded": len(by_symbol),
+            "excluded_unmatched_sells": excluded_unmatched_sells,
         },
         "daily_cumulative_return_pct": daily_series,
         "methodology_note": (
@@ -188,6 +207,11 @@ def compute_closed_trades_performance(csv_path: str | Path) -> dict:
             "divided by total capital contributed to the account. Excludes open "
             "positions (until they close), dividends/interest, taxes, and "
             "account-level financing costs. Percentages only -- no dollar "
-            "amounts, account numbers, or symbol-level detail are published."
+            "amounts, account numbers, or symbol-level detail are published. "
+            "Position closures where a Sell row's quantity exceeds this CSV's "
+            "own tracked Buy history (e.g. DRIP shares, splits, transfers-in, "
+            "or option assignment) are excluded rather than scored, since their "
+            "cost basis is unknown and would otherwise fabricate a false "
+            "zero-cost profit; see excluded_unmatched_sells."
         ),
     }

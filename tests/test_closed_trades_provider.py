@@ -120,3 +120,49 @@ def test_open_position_does_not_produce_large_negative_return(tmp_path):
 def test_missing_file_raises_filenotfound(tmp_path):
     with pytest.raises(FileNotFoundError):
         compute_closed_trades_performance(tmp_path / "does_not_exist.csv")
+
+
+def test_oversold_quantity_excluded_not_scored_as_phantom_win(tmp_path):
+    """Regression test: selling more shares than this CSV's own Buy rows
+    ever established a cost basis for (DRIP shares, splits, transferred-in
+    positions, option assignment, etc.) must not be treated as a zero-cost
+    100%-profit closure. Before the fix, this produced a fabricated
+    total_return_pct of 25.0 / avg_gain_pct_per_trade of 100.0 from a
+    position this provider never actually saw the cost basis for.
+    """
+    rows = [
+        ["09/10/2026", "Sell", "X", "X CORP", "10", "$50.00", "", "$500.00"],
+        ["09/01/2026", "Buy", "X", "X CORP", "5", "$50.00", "", "-$250.00"],
+        ["08/01/2026", "MoneyLink Transfer", "", "Tfr BANK", "", "", "", "$1000.00"],
+    ]
+    csv_path = tmp_path / "in.csv"
+    _write_csv(csv_path, rows)
+    data = compute_closed_trades_performance(csv_path)
+
+    assert data["metrics"]["closed_trades"] == 0
+    assert data["metrics"]["total_return_pct"] == 0.0
+    assert data["metrics"]["avg_gain_pct_per_trade"] is None
+    assert data["metrics"]["excluded_unmatched_sells"] == 1
+    assert data["as_of"] is None
+    assert data["daily_cumulative_return_pct"] == []
+
+
+def test_oversold_position_does_not_affect_other_symbols(tmp_path):
+    """An oversold closure on one symbol must not contaminate a genuine,
+    fully-matched closed trade on another symbol."""
+    rows = [
+        ["09/12/2026", "Sell", "GOOD", "GOOD CORP", "10", "$110.00", "$0.01", "$1099.99"],
+        ["09/02/2026", "Buy", "GOOD", "GOOD CORP", "10", "$100.00", "", "-$1000.00"],
+        ["09/10/2026", "Sell", "OVER", "OVER CORP", "10", "$50.00", "", "$500.00"],
+        ["09/01/2026", "Buy", "OVER", "OVER CORP", "5", "$50.00", "", "-$250.00"],
+        ["08/01/2026", "MoneyLink Transfer", "", "Tfr BANK", "", "", "", "$2000.00"],
+    ]
+    csv_path = tmp_path / "in.csv"
+    _write_csv(csv_path, rows)
+    data = compute_closed_trades_performance(csv_path)
+
+    assert data["metrics"]["closed_trades"] == 1
+    assert data["metrics"]["excluded_unmatched_sells"] == 1
+    assert data["metrics"]["win_rate_pct"] == 100.0
+    # profit = 1099.99 - 1000.00 = 99.99; contributed = 2000.00 -> 4.9995%
+    assert abs(data["metrics"]["total_return_pct"] - 4.9995) < 0.001

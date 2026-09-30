@@ -2,6 +2,11 @@
 
 All notable source-quality changes to this repository are documented here.
 
+## v0.1.6 - 2026-09-30
+
+- Fix `closed_trades.py` fabricating a phantom zero-cost-basis profit when a Sell row's quantity exceeded what the CSV's own Buy rows established a cost basis for (e.g. DRIP reinvestment shares, stock splits, shares transferred/journaled in, or option assignment/exercise that never appear as tracked "Buy" rows). Such closures are now excluded from the published metrics instead of silently scored as a realized win, and the count is surfaced via `metrics.excluded_unmatched_sells`.
+- Add regression coverage reproducing the pre-fix fabricated win and asserting the fixed exclusion behavior.
+
 ## v0.1.5 - 2026-09-27
 
 - Reject non-finite equity snapshots before performance computation so `NaN`/`Infinity` provider values cannot leak into public JSON or produce meaningless return and drawdown metrics.
